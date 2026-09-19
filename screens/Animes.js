@@ -1,4 +1,10 @@
-import {StyleSheet,Text,View, ScrollView,TouchableOpacity,} from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
 
 import { useState } from 'react';
 
@@ -11,8 +17,49 @@ export default function Animes() {
 
   const [animes, setAnimes] = useState(animesIniciais);
 
+  const [animeSelecionado, setAnimeSelecionado] = useState(null);
+
   function adicionarAnime(novoAnime) {
     setAnimes([...animes, novoAnime]);
+  }
+
+  function selecionarAnime(anime) {
+    setAnimeSelecionado(anime);
+    setModalVisivel(true);
+  }
+
+  function editarAnime(animeEditado) {
+    const novaLista = animes.map((anime) => {
+      if (anime === animeSelecionado) {
+        return animeEditado;
+      }
+
+      return anime;
+    });
+
+    setAnimes(novaLista);
+    setAnimeSelecionado(null);
+    setModalVisivel(false);
+  }
+
+  function deletarAnime() {
+    const novaLista = animes.filter((anime) => {
+      return anime !== animeSelecionado;
+    });
+
+    setAnimes(novaLista);
+    setAnimeSelecionado(null);
+    setModalVisivel(false);
+  }
+
+  function abrirModalAdicionar() {
+    setAnimeSelecionado(null);
+    setModalVisivel(true);
+  }
+
+  function fecharModal() {
+    setModalVisivel(false);
+    setAnimeSelecionado(null);
   }
 
   return (
@@ -29,7 +76,11 @@ export default function Animes() {
       <ScrollView>
 
         {animes.map((anime, index) => (
-          <View style={styles.card} key={index}>
+          <TouchableOpacity
+            key={index}
+            style={styles.card}
+            onPress={() => selecionarAnime(anime)}
+          >
 
             <Text style={styles.posicao}>
               {anime.posicao}
@@ -51,14 +102,14 @@ export default function Animes() {
               ⭐ {anime.nota}
             </Text>
 
-          </View>
+          </TouchableOpacity>
         ))}
 
       </ScrollView>
 
       <TouchableOpacity
         style={styles.botao}
-        onPress={() => setModalVisivel(true)}
+        onPress={abrirModalAdicionar}
       >
         <Text style={styles.textoBotao}>
           + Adicionar Anime
@@ -67,8 +118,11 @@ export default function Animes() {
 
       <ModalAnime
         visivel={modalVisivel}
-        fecharModal={() => setModalVisivel(false)}
+        fecharModal={fecharModal}
         adicionarAnime={adicionarAnime}
+        animeSelecionado={animeSelecionado}
+        editarAnime={editarAnime}
+        deletarAnime={deletarAnime}
       />
 
     </View>
@@ -76,21 +130,22 @@ export default function Animes() {
 }
 
 const styles = StyleSheet.create({
-
   container: {
     flex: 1,
+    backgroundColor: '#11111b',
     padding: 20,
   },
 
   titulo: {
     fontSize: 28,
     fontWeight: 'bold',
+    color: '#ffffff',
     marginBottom: 5,
   },
 
   subtitulo: {
-    fontSize: 16,
-    color: 'gray',
+    fontSize: 15,
+    color: '#9999aa',
     marginBottom: 20,
   },
 
@@ -98,13 +153,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 15,
-    marginBottom: 10,
-    backgroundColor: '#eee',
-    borderRadius: 10,
+    marginBottom: 12,
+    backgroundColor: '#1c1c2b',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#2b2b40',
   },
 
   posicao: {
-    fontSize: 25,
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    backgroundColor: '#6c3cff',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
     marginRight: 15,
   },
 
@@ -115,29 +178,33 @@ const styles = StyleSheet.create({
   nome: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: '#ffffff',
   },
 
   genero: {
-    color: 'gray',
+    color: '#9999aa',
     marginTop: 5,
+    fontSize: 14,
   },
 
   nota: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
+    color: '#ffffff',
   },
 
   botao: {
-    backgroundColor: '#222',
-    padding: 15,
-    borderRadius: 10,
+    backgroundColor: '#6c3cff',
+    padding: 16,
+    borderRadius: 14,
     alignItems: 'center',
     marginTop: 10,
+    marginBottom: 10,
   },
 
   textoBotao: {
-    color: 'white',
+    color: '#ffffff',
+    fontSize: 16,
     fontWeight: 'bold',
   },
-
 });

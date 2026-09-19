@@ -9,56 +9,52 @@ import {
 
 import { useEffect, useState } from 'react';
 
-export default function ModalAnime({
+export default function ModalGeneros({
   visivel,
   fecharModal,
-  adicionarAnime,
-  animeSelecionado,
-  editarAnime,
-  deletarAnime,
+  adicionarGenero,
+  generoSelecionado,
+  editarGenero,
+  deletarGenero,
 }) {
 
   const [nome, setNome] = useState('');
-  const [nota, setNota] = useState('');
-  const [genero, setGenero] = useState('');
-  const [posicao, setPosicao] = useState('');
+  const [descricao, setDescricao] = useState('');
 
   useEffect(() => {
 
-    if (animeSelecionado) {
+    if (generoSelecionado) {
 
-      setNome(animeSelecionado.nome);
-      setNota(animeSelecionado.nota);
-      setGenero(animeSelecionado.genero);
-      setPosicao(animeSelecionado.posicao);
+      setNome(generoSelecionado.nome);
+      setDescricao(generoSelecionado.descricao);
 
     } else {
 
       setNome('');
-      setNota('');
-      setGenero('');
-      setPosicao('');
+      setDescricao('');
 
     }
 
-  }, [animeSelecionado, visivel]);
+  }, [generoSelecionado, visivel]);
 
   function salvar() {
 
-    const anime = {
-      posicao: posicao,
+    const genero = {
+      id: generoSelecionado
+        ? generoSelecionado.id
+        : Date.now(),
+
       nome: nome,
-      nota: nota,
-      genero: genero,
+      descricao: descricao,
     };
 
-    if (animeSelecionado) {
+    if (generoSelecionado) {
 
-      editarAnime(anime);
+      editarGenero(genero);
 
     } else {
 
-      adicionarAnime(anime);
+      adicionarGenero(genero);
 
     }
 
@@ -66,7 +62,7 @@ export default function ModalAnime({
   }
 
   function excluir() {
-    deletarAnime();
+    deletarGenero();
   }
 
   return (
@@ -82,38 +78,23 @@ export default function ModalAnime({
         <View style={styles.modal}>
 
           <Text style={styles.titulo}>
-            {animeSelecionado
-              ? 'Editar Anime'
-              : 'Adicionar Anime'}
+            {generoSelecionado
+              ? 'Editar Gênero'
+              : 'Adicionar Gênero'}
           </Text>
 
           <TextInput
             style={styles.input}
-            placeholder="Posição"
-            value={posicao}
-            onChangeText={setPosicao}
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Nome do anime"
+            placeholder="Nome do gênero"
             value={nome}
             onChangeText={setNome}
           />
 
           <TextInput
             style={styles.input}
-            placeholder="Nota"
-            value={nota}
-            onChangeText={setNota}
-            keyboardType="numeric"
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Gênero"
-            value={genero}
-            onChangeText={setGenero}
+            placeholder="Descrição"
+            value={descricao}
+            onChangeText={setDescricao}
           />
 
           <TouchableOpacity
@@ -122,14 +103,14 @@ export default function ModalAnime({
           >
 
             <Text style={styles.textoBotao}>
-              {animeSelecionado
+              {generoSelecionado
                 ? 'Salvar Alterações'
-                : 'Adicionar Anime'}
+                : 'Adicionar Gênero'}
             </Text>
 
           </TouchableOpacity>
 
-          {animeSelecionado && (
+          {generoSelecionado && (
 
             <TouchableOpacity
               style={styles.botaoExcluir}
@@ -137,7 +118,7 @@ export default function ModalAnime({
             >
 
               <Text style={styles.textoBotao}>
-                Deletar Anime
+                Deletar Gênero
               </Text>
 
             </TouchableOpacity>
