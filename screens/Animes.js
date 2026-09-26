@@ -6,12 +6,13 @@ import {
   TouchableOpacity,
 } from 'react-native';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import animesIniciais from '../Data/Animes';
 import ModalAnime from '../components/ModalAnimes';
 
-export default function Animes() {
+export default function Animes({ navigation }) {
 
   const [modalVisivel, setModalVisivel] = useState(false);
 
@@ -19,17 +20,53 @@ export default function Animes() {
 
   const [animeSelecionado, setAnimeSelecionado] = useState(null);
 
+  useEffect(() => {
+    carregarAnimes();
+  }, []);
+
+  async function carregarAnimes() {
+    try {
+      const dados = await AsyncStorage.getItem('animes');
+
+      if (dados) {
+        setAnimes(JSON.parse(dados));
+      }
+    } catch (erro) {
+      console.log('Erro ao carregar animes:', erro);
+    }
+  }
+
+  async function salvarAnimes(novaLista) {
+    try {
+      await AsyncStorage.setItem(
+        'animes',
+        JSON.stringify(novaLista)
+      );
+
+      setAnimes(novaLista);
+    } catch (erro) {
+      console.log('Erro ao salvar animes:', erro);
+    }
+  }
+
   function adicionarAnime(novoAnime) {
-    setAnimes([...animes, novoAnime]);
+
+    const novaLista = [...animes, novoAnime];
+
+    salvarAnimes(novaLista);
   }
 
   function selecionarAnime(anime) {
+
     setAnimeSelecionado(anime);
+
     setModalVisivel(true);
   }
 
   function editarAnime(animeEditado) {
+
     const novaLista = animes.map((anime) => {
+
       if (anime === animeSelecionado) {
         return animeEditado;
       }
@@ -37,28 +74,36 @@ export default function Animes() {
       return anime;
     });
 
-    setAnimes(novaLista);
+    salvarAnimes(novaLista);
+
     setAnimeSelecionado(null);
     setModalVisivel(false);
   }
 
   function deletarAnime() {
+
     const novaLista = animes.filter((anime) => {
+
       return anime !== animeSelecionado;
     });
 
-    setAnimes(novaLista);
+    salvarAnimes(novaLista);
+
     setAnimeSelecionado(null);
     setModalVisivel(false);
   }
 
-  function abrirModalAdicionar() {
-    setAnimeSelecionado(null);
-    setModalVisivel(true);
+  function abrirCadastro() {
+
+    navigation.navigate('CadastroAnime', {
+      adicionarAnime: adicionarAnime,
+    });
   }
 
   function fecharModal() {
+
     setModalVisivel(false);
+
     setAnimeSelecionado(null);
   }
 
@@ -76,6 +121,7 @@ export default function Animes() {
       <ScrollView>
 
         {animes.map((anime, index) => (
+
           <TouchableOpacity
             key={index}
             style={styles.card}
@@ -103,17 +149,20 @@ export default function Animes() {
             </Text>
 
           </TouchableOpacity>
+
         ))}
 
       </ScrollView>
 
       <TouchableOpacity
         style={styles.botao}
-        onPress={abrirModalAdicionar}
+        onPress={abrirCadastro}
       >
+
         <Text style={styles.textoBotao}>
           + Adicionar Anime
         </Text>
+
       </TouchableOpacity>
 
       <ModalAnime
@@ -130,6 +179,7 @@ export default function Animes() {
 }
 
 const styles = StyleSheet.create({
+
   container: {
     flex: 1,
     backgroundColor: '#11111b',
@@ -207,4 +257,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+
 });

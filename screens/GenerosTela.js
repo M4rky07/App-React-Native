@@ -6,12 +6,13 @@ import {
   TouchableOpacity,
 } from 'react-native';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import generosIniciais from '../Data/Generos';
 import ModalGeneros from '../components/ModalGeneros';
 
-export default function Generos() {
+export default function Generos({ navigation }) {
 
   const [generos, setGeneros] = useState(generosIniciais);
 
@@ -19,12 +20,46 @@ export default function Generos() {
 
   const [generoSelecionado, setGeneroSelecionado] = useState(null);
 
+  useEffect(() => {
+    carregarGeneros();
+  }, []);
+
+  async function carregarGeneros() {
+    try {
+      const dados = await AsyncStorage.getItem('generos');
+
+      if (dados) {
+        setGeneros(JSON.parse(dados));
+      }
+    } catch (erro) {
+      console.log('Erro ao carregar gêneros:', erro);
+    }
+  }
+
+  async function salvarGeneros(novaLista) {
+    try {
+      await AsyncStorage.setItem(
+        'generos',
+        JSON.stringify(novaLista)
+      );
+
+      setGeneros(novaLista);
+    } catch (erro) {
+      console.log('Erro ao salvar gêneros:', erro);
+    }
+  }
+
   function adicionarGenero(novoGenero) {
-    setGeneros([...generos, novoGenero]);
+
+    const novaLista = [...generos, novoGenero];
+
+    salvarGeneros(novaLista);
   }
 
   function selecionarGenero(genero) {
+
     setGeneroSelecionado(genero);
+
     setModalVisivel(true);
   }
 
@@ -39,7 +74,8 @@ export default function Generos() {
       return genero;
     });
 
-    setGeneros(novaLista);
+    salvarGeneros(novaLista);
+
     setGeneroSelecionado(null);
     setModalVisivel(false);
   }
@@ -49,21 +85,25 @@ export default function Generos() {
     const novaLista = generos.filter((genero) => {
 
       return genero.id !== generoSelecionado.id;
-
     });
 
-    setGeneros(novaLista);
+    salvarGeneros(novaLista);
+
     setGeneroSelecionado(null);
     setModalVisivel(false);
   }
 
-  function abrirModalAdicionar() {
-    setGeneroSelecionado(null);
-    setModalVisivel(true);
+  function abrirCadastro() {
+
+    navigation.navigate('CadastroGenero', {
+      adicionarGenero: adicionarGenero,
+    });
   }
 
   function fecharModal() {
+
     setModalVisivel(false);
+
     setGeneroSelecionado(null);
   }
 
@@ -104,7 +144,7 @@ export default function Generos() {
 
       <TouchableOpacity
         style={styles.botao}
-        onPress={abrirModalAdicionar}
+        onPress={abrirCadastro}
       >
 
         <Text style={styles.textoBotao}>
@@ -127,6 +167,7 @@ export default function Generos() {
 }
 
 const styles = StyleSheet.create({
+
   container: {
     flex: 1,
     backgroundColor: '#11111b',
@@ -187,4 +228,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+
 });

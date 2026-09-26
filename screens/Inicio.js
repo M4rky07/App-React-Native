@@ -3,14 +3,54 @@ import {
   Text,
   View,
   ScrollView,
+  TouchableOpacity,
 } from 'react-native';
 
+import { useState } from 'react';
+import * as Location from 'expo-location';
+
 export default function Inicio() {
+
+  const [localizacao, setLocalizacao] = useState(null);
+  const [carregando, setCarregando] = useState(false);
+  const [erro, setErro] = useState('');
+
+  async function pegarLocalizacao() {
+
+    setCarregando(true);
+    setErro('');
+
+    try {
+
+      const { status } = await Location.requestForegroundPermissionsAsync();
+
+      if (status !== 'granted') {
+        setErro('Permissão para acessar a localização foi negada.');
+        setCarregando(false);
+        return;
+      }
+
+      const local = await Location.getCurrentPositionAsync({});
+
+      setLocalizacao(local.coords);
+
+    } catch (error) {
+
+      console.log('Erro ao pegar localização:', error);
+
+      setErro('Não foi possível obter sua localização.');
+
+    }
+
+    setCarregando(false);
+  }
+
   return (
     <ScrollView
       style={styles.container}
       showsVerticalScrollIndicator={false}
     >
+
       <View style={styles.conteudo}>
 
         <Text style={styles.emoji}>
@@ -49,6 +89,7 @@ export default function Inicio() {
           </Text>
 
           <View style={styles.cardInfo}>
+
             <Text style={styles.cardTitulo}>
               Animes
             </Text>
@@ -57,6 +98,7 @@ export default function Inicio() {
               Cadastre seus animes, altere suas informações
               ou remova aqueles que não deseja mais.
             </Text>
+
           </View>
 
         </View>
@@ -68,6 +110,7 @@ export default function Inicio() {
           </Text>
 
           <View style={styles.cardInfo}>
+
             <Text style={styles.cardTitulo}>
               Gêneros
             </Text>
@@ -76,6 +119,7 @@ export default function Inicio() {
               Organize os gêneros dos seus animes e
               mantenha suas informações atualizadas.
             </Text>
+
           </View>
 
         </View>
@@ -93,12 +137,59 @@ export default function Inicio() {
 
         </View>
 
+        <View style={styles.localizacao}>
+
+          <Text style={styles.localizacaoTitulo}>
+            📍 Minha localização
+          </Text>
+
+          <TouchableOpacity
+            style={styles.botaoLocalizacao}
+            onPress={pegarLocalizacao}
+          >
+
+            <Text style={styles.textoBotaoLocalizacao}>
+              {carregando
+                ? 'Obtendo localização...'
+                : 'Obter minha localização'}
+            </Text>
+
+          </TouchableOpacity>
+
+          {localizacao && (
+
+            <View style={styles.dadosLocalizacao}>
+
+              <Text style={styles.textoLocalizacao}>
+                Latitude: {localizacao.latitude}
+              </Text>
+
+              <Text style={styles.textoLocalizacao}>
+                Longitude: {localizacao.longitude}
+              </Text>
+
+            </View>
+
+          )}
+
+          {erro !== '' && (
+
+            <Text style={styles.erro}>
+              {erro}
+            </Text>
+
+          )}
+
+        </View>
+
       </View>
+
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+
   container: {
     flex: 1,
     backgroundColor: '#11111b',
@@ -214,4 +305,50 @@ const styles = StyleSheet.create({
     color: '#ccccdd',
     lineHeight: 20,
   },
+
+  localizacao: {
+    backgroundColor: '#1c1c2b',
+    borderRadius: 14,
+    padding: 18,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: '#2b2b40',
+  },
+
+  localizacaoTitulo: {
+    fontSize: 19,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 15,
+  },
+
+  botaoLocalizacao: {
+    backgroundColor: '#6c3cff',
+    padding: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+
+  textoBotaoLocalizacao: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+
+  dadosLocalizacao: {
+    marginTop: 15,
+  },
+
+  textoLocalizacao: {
+    color: '#ccccdd',
+    fontSize: 15,
+    marginBottom: 5,
+  },
+
+  erro: {
+    color: '#ff7777',
+    marginTop: 12,
+    fontSize: 14,
+  },
+
 });
