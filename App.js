@@ -11,6 +11,7 @@ import Animes from './screens/Animes';
 import Generos from './screens/GenerosTela';
 import CadastroAnime from './screens/CadastroAnimes';
 import CadastroGenero from './screens/CadastroGenero';
+import EditarAnime from './screens/EditarAnimes';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -22,7 +23,6 @@ function Navegacao() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-
         tabBarStyle: {
           backgroundColor: '#1c1c2b',
           borderTopColor: '#2b2b40',
@@ -30,10 +30,8 @@ function Navegacao() {
           paddingTop: 8,
           paddingBottom: 8 + insets.bottom,
         },
-
         tabBarActiveTintColor: '#6c3cff',
         tabBarInactiveTintColor: '#9999aa',
-
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: 'bold',
@@ -55,16 +53,9 @@ function AppStack() {
       }}
     >
       <Stack.Screen name="Principal" component={Navegacao} />
-
-      <Stack.Screen
-        name="CadastroAnime"
-        component={CadastroAnime}
-      />
-
-      <Stack.Screen
-        name="CadastroGenero"
-        component={CadastroGenero}
-      />
+      <Stack.Screen name="CadastroAnime" component={CadastroAnime} />
+      <Stack.Screen name="CadastroGenero" component={CadastroGenero} />
+      <Stack.Screen name="EditarAnime" component={EditarAnime} />
     </Stack.Navigator>
   );
 }
