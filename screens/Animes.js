@@ -4,25 +4,23 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import animesIniciais from '../Data/Animes';
-import ModalAnime from '../components/ModalAnimes';
 
 export default function Animes({ navigation }) {
-
-  const [modalVisivel, setModalVisivel] = useState(false);
-
   const [animes, setAnimes] = useState(animesIniciais);
 
-  const [animeSelecionado, setAnimeSelecionado] = useState(null);
-
-  useEffect(() => {
-    carregarAnimes();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      carregarAnimes();
+    }, [])
+  );
 
   async function carregarAnimes() {
     try {
@@ -30,6 +28,8 @@ export default function Animes({ navigation }) {
 
       if (dados) {
         setAnimes(JSON.parse(dados));
+      } else {
+        setAnimes(animesIniciais);
       }
     } catch (erro) {
       console.log('Erro ao carregar animes:', erro);
@@ -38,152 +38,105 @@ export default function Animes({ navigation }) {
 
   async function salvarAnimes(novaLista) {
     try {
-      await AsyncStorage.setItem(
-        'animes',
-        JSON.stringify(novaLista)
-      );
-
+      await AsyncStorage.setItem('animes', JSON.stringify(novaLista));
       setAnimes(novaLista);
     } catch (erro) {
       console.log('Erro ao salvar animes:', erro);
+      Alert.alert('Erro', 'Não foi possível salvar as alterações.');
     }
   }
 
-  function adicionarAnime(novoAnime) {
-
-    const novaLista = [...animes, novoAnime];
-
-    salvarAnimes(novaLista);
-  }
-
-  function selecionarAnime(anime) {
-
-    setAnimeSelecionado(anime);
-
-    setModalVisivel(true);
-  }
-
-  function editarAnime(animeEditado) {
-
-    const novaLista = animes.map((anime) => {
-
-      if (anime === animeSelecionado) {
-        return animeEditado;
-      }
-
-      return anime;
-    });
-
-    salvarAnimes(novaLista);
-
-    setAnimeSelecionado(null);
-    setModalVisivel(false);
-  }
-
-  function deletarAnime() {
-
-    const novaLista = animes.filter((anime) => {
-
-      return anime !== animeSelecionado;
-    });
-
-    salvarAnimes(novaLista);
-
-    setAnimeSelecionado(null);
-    setModalVisivel(false);
-  }
-
   function abrirCadastro() {
-
-    navigation.navigate('CadastroAnime', {
-      adicionarAnime: adicionarAnime,
-    });
+    navigation.navigate('CadastroAnime');
   }
 
-  function fecharModal() {
+  function abrirEdicao(anime) {
+    navigation.navigate('EditarAnime', { anime });
+  }
 
-    setModalVisivel(false);
+  function excluirAnime(anime) {
+    Alert.alert(
+      'Excluir anime',
+      `Deseja excluir "${anime.nome}"?`,
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: async () => {
+            const novaLista = animes.filter((item) => {
+              if (anime.id !== undefined && anime.id !== null) {
+                return item.id !== anime.id;
+              }
 
-    setAnimeSelecionado(null);
+              return item !== anime;
+            });
+
+            await salvarAnimes(novaLista);
+          },
+        },
+      ]
+    );
   }
 
   return (
     <View style={styles.container}>
-
-      <Text style={styles.titulo}>
-        🎬 Meus Animes
-      </Text>
-
-      <Text style={styles.subtitulo}>
-        Lista de animes cadastrados
-      </Text>
+      <Text style={styles.titulo}>🎬 Meus Animes</Text>
+      <Text style={styles.subtitulo}>Lista de animes cadastrados</Text>
 
       <ScrollView>
-
         {animes.map((anime, index) => (
-
-          <TouchableOpacity
-            key={index}
+          <View
+            key={anime.id ?? `${anime.nome}-${index}`}
             style={styles.card}
-            onPress={() => selecionarAnime(anime)}
           >
-
-            <Text style={styles.posicao}>
-              {anime.posicao}
-            </Text>
+            <Text style={styles.posicao}>{anime.posicao}</Text>
 
             <View style={styles.info}>
-
-              <Text style={styles.nome}>
-                {anime.nome}
-              </Text>
-
-              <Text style={styles.genero}>
-                {anime.genero}
-              </Text>
-
+              <Text style={styles.nome}>{anime.nome}</Text>
+              <Text style={styles.genero}>{anime.genero}</Text>
             </View>
 
-            <Text style={styles.nota}>
-              ⭐ {anime.nota}
-            </Text>
+            <Text style={styles.nota}>⭐ {anime.nota}</Text>
 
-          </TouchableOpacity>
+            <View style={styles.acoes}>
+              <TouchableOpacity
+                style={styles.botaoEditar}
+                onPress={() => abrirEdicao(anime)}
+              >
+                <Text style={styles.textoAcao}>Editar</Text>
+              </TouchableOpacity>
 
+              <TouchableOpacity
+                style={styles.botaoExcluir}
+                onPress={() => excluirAnime(anime)}
+              >
+                <Text style={styles.textoAcao}>Excluir</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         ))}
-
       </ScrollView>
 
       <TouchableOpacity
         style={styles.botao}
         onPress={abrirCadastro}
       >
-
-        <Text style={styles.textoBotao}>
-          + Adicionar Anime
-        </Text>
-
+        <Text style={styles.textoBotao}>+ Adicionar Anime</Text>
       </TouchableOpacity>
-
-      <ModalAnime
-        visivel={modalVisivel}
-        fecharModal={fecharModal}
-        adicionarAnime={adicionarAnime}
-        animeSelecionado={animeSelecionado}
-        editarAnime={editarAnime}
-        deletarAnime={deletarAnime}
-      />
-
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-
   container: {
     flex: 1,
     backgroundColor: '#11111b',
     padding: 20,
+    paddingTop: 45,
   },
 
   titulo: {
@@ -194,68 +147,87 @@ const styles = StyleSheet.create({
   },
 
   subtitulo: {
-    fontSize: 15,
+    fontSize: 14,
     color: '#9999aa',
     marginBottom: 20,
   },
 
   card: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    backgroundColor: '#1c1c2b',
+    borderWidth: 1,
+    borderColor: '#36364d',
+    borderRadius: 12,
     padding: 15,
     marginBottom: 12,
-    backgroundColor: '#1c1c2b',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#2b2b40',
   },
 
   posicao: {
-    fontSize: 20,
+    color: '#6c3cff',
+    fontSize: 14,
     fontWeight: 'bold',
-    color: '#ffffff',
-    backgroundColor: '#6c3cff',
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-    marginRight: 15,
+    marginBottom: 5,
   },
 
   info: {
     flex: 1,
+    marginBottom: 8,
   },
 
   nome: {
-    fontSize: 18,
-    fontWeight: 'bold',
     color: '#ffffff',
+    fontSize: 17,
+    fontWeight: 'bold',
   },
 
   genero: {
     color: '#9999aa',
-    marginTop: 5,
     fontSize: 14,
+    marginTop: 4,
   },
 
   nota: {
-    fontSize: 15,
-    fontWeight: 'bold',
     color: '#ffffff',
+    fontSize: 14,
+    marginBottom: 12,
+  },
+
+  acoes: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+
+  botaoEditar: {
+    flex: 1,
+    backgroundColor: '#36364d',
+    padding: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+
+  botaoExcluir: {
+    flex: 1,
+    backgroundColor: '#7f2638',
+    padding: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+
+  textoAcao: {
+    color: '#ffffff',
+    fontWeight: 'bold',
   },
 
   botao: {
     backgroundColor: '#6c3cff',
     padding: 16,
-    borderRadius: 14,
+    borderRadius: 12,
     alignItems: 'center',
     marginTop: 10,
-    marginBottom: 10,
   },
 
   textoBotao: {
     color: '#ffffff',
-    fontSize: 16,
     fontWeight: 'bold',
+    fontSize: 16,
   },
-
 });

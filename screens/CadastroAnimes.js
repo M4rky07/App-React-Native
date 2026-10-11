@@ -1,37 +1,72 @@
+
 import {
   StyleSheet,
   Text,
   View,
   TextInput,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 
 import { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function CadastroAnime({ navigation, route }) {
+export default function CadastroAnime({ navigation }) {
   const [nome, setNome] = useState('');
   const [nota, setNota] = useState('');
   const [genero, setGenero] = useState('');
   const [posicao, setPosicao] = useState('');
 
-  function salvar() {
-    const novoAnime = {
-      posicao: Number(posicao),
-      nome: nome,
-      nota: Number(nota),
-      genero: genero,
-    };
+  async function salvar() {
+    if (!nome.trim() || !nota.trim() || !genero.trim() || !posicao.trim()) {
+      Alert.alert('Atenção', 'Preencha todos os campos.');
+      return;
+    }
 
-    route.params.adicionarAnime(novoAnime);
+    const notaNumero = Number(nota);
+    const posicaoNumero = Number(posicao);
 
-    navigation.goBack();
+    if (
+      !Number.isFinite(notaNumero) ||
+      notaNumero < 0 ||
+      notaNumero > 10 ||
+      !Number.isInteger(posicaoNumero) ||
+      posicaoNumero < 1
+    ) {
+      Alert.alert(
+        'Dados inválidos',
+        'A nota deve ser de 0 a 10 e a posição deve ser um número inteiro positivo.'
+      );
+      return;
+    }
+
+    try {
+      const dados = await AsyncStorage.getItem('animes');
+      const animes = dados ? JSON.parse(dados) : [];
+
+      const novoAnime = {
+        id: Date.now(),
+        posicao: posicaoNumero,
+        nome: nome.trim(),
+        nota: notaNumero,
+        genero: genero.trim(),
+      };
+
+      await AsyncStorage.setItem(
+        'animes',
+        JSON.stringify([...animes, novoAnime])
+      );
+
+      navigation.goBack();
+    } catch (erro) {
+      console.log('Erro ao salvar anime:', erro);
+      Alert.alert('Erro', 'Não foi possível salvar o anime.');
+    }
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.titulo}>
-        Cadastrar Anime
-      </Text>
+      <Text style={styles.titulo}>Cadastrar Anime</Text>
 
       <TextInput
         style={styles.input}
@@ -71,18 +106,14 @@ export default function CadastroAnime({ navigation, route }) {
         style={styles.botaoSalvar}
         onPress={salvar}
       >
-        <Text style={styles.textoBotao}>
-          Cadastrar
-        </Text>
+        <Text style={styles.textoBotao}>Cadastrar</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.botaoCancelar}
         onPress={() => navigation.goBack()}
       >
-        <Text style={styles.textoCancelar}>
-          Cancelar
-        </Text>
+        <Text style={styles.textoCancelar}>Cancelar</Text>
       </TouchableOpacity>
     </View>
   );
